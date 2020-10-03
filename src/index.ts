@@ -2,6 +2,7 @@ import * as http from 'http'
 import express from 'express'
 import dotenv from 'dotenv'
 import socketIo from 'socket.io'
+import cors from 'cors'
 import { v4 as uuidv4 } from 'uuid'
 
 export const SocketIoEvent = {
@@ -24,6 +25,7 @@ dotenv.config()
 const PORT: string = process.env.PORT || '8000'
 
 const app: express.Express = express()
+app.use(cors())
 const server: http.Server = http.createServer(app)
 
 const io: socketIo.Server = socketIo(server)
