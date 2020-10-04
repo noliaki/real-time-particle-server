@@ -28,9 +28,12 @@ const app: express.Express = express()
 app.use(cors())
 const server: http.Server = http.createServer(app)
 
-const io: socketIo.Server = socketIo(server)
+const io: socketIo.Server = socketIo(PORT)
 
 io.on('connection', (socket: socketIo.Socket): void => {
+  console.log('connection: ' + socket.id)
+  console.log('rooms: ' + JSON.stringify(socket.rooms))
+
   socket.on(SocketIoEvent.VIEW_JOIN_ROOM, () => {
     const roomId = uuidv4()
     socket.join(roomId, () => {
@@ -80,6 +83,6 @@ io.on('connection', (socket: socketIo.Socket): void => {
   )
 })
 
-server.listen(parseInt(PORT, 10), '0.0.0.0', () => {
-  console.log(`listen start: ${PORT}`)
-})
+// server.listen(parseInt(PORT, 10), '0.0.0.0', () => {
+//   console.log(`listen start: ${PORT}`)
+// })
