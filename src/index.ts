@@ -1,8 +1,5 @@
-import * as http from 'http'
-import express from 'express'
 import dotenv from 'dotenv'
 import socketIo from 'socket.io'
-import cors from 'cors'
 import { v4 as uuidv4 } from 'uuid'
 
 export const SocketIoEvent = {
@@ -24,18 +21,12 @@ dotenv.config()
 
 const PORT: string = process.env.PORT || '8000'
 
-const app: express.Express = express()
-app.use(cors())
-const server: http.Server = http.createServer(app)
-
 const io: socketIo.Server = socketIo(PORT)
 
 io.on('connection', (socket: socketIo.Socket): void => {
-  console.log('connection: ' + socket.id)
-  console.log('rooms: ' + JSON.stringify(socket.rooms))
-
   socket.on(SocketIoEvent.VIEW_JOIN_ROOM, () => {
     const roomId = uuidv4()
+
     socket.join(roomId, () => {
       io.to(roomId).emit(SocketIoEvent.VIEW_JOINED_ROOM, { roomId })
     })
@@ -49,12 +40,15 @@ io.on('connection', (socket: socketIo.Socket): void => {
   })
 
   socket.on(SocketIoEvent.CONNECTED_CONTROLLER, ({ roomId }) => {
+    console.log('SocketIoEvent.CONNECTED_CONTROLLER: ' + roomId)
     io.to(roomId).emit(SocketIoEvent.CONNECTED_CONTROLLER, { roomId })
   })
 
   socket.on(
     SocketIoEvent.DEVICE_ORIENTATION,
     ({ roomId, alpah, beta, gamma }) => {
+      console.log('SocketIoEvent.DEVICE_ORIENTATION: ')
+
       if (!roomId) {
         return
       }
@@ -66,6 +60,9 @@ io.on('connection', (socket: socketIo.Socket): void => {
   socket.on(
     SocketIoEvent.ON_CAMERA_POSITION_CHANGE,
     ({ roomId, x, y, z }): void => {
+      console.log('SocketIoEvent.ON_CAMERA_POSITION_CHANGE: ')
+      console.log(roomId, x, y, z)
+
       if (!roomId) {
         return
       }
@@ -77,12 +74,9 @@ io.on('connection', (socket: socketIo.Socket): void => {
   socket.on(
     SocketIoEvent.ON_UPLOAD_IMAGE,
     ({ roomId, imageRate, data }): void => {
+      console.log('SocketIoEvent.ON_UPLOAD_IMAGE: ')
       console.log(roomId, imageRate, data)
       io.to(roomId).emit(SocketIoEvent.ON_UPLOAD_IMAGE, { imageRate, data })
     }
   )
 })
-
-// server.listen(parseInt(PORT, 10), '0.0.0.0', () => {
-//   console.log(`listen start: ${PORT}`)
-// })
