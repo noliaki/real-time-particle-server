@@ -21,7 +21,9 @@ dotenv.config()
 
 const PORT: string = process.env.PORT || '8000'
 
-const io: socketIo.Server = socketIo(PORT)
+const io: socketIo.Server = socketIo(PORT, {
+  origins: process.env.ALLOW_ORIGIN || '*:*',
+})
 
 io.on('connection', (socket: socketIo.Socket): void => {
   socket.on(SocketIoEvent.VIEW_JOIN_ROOM, () => {
@@ -33,23 +35,25 @@ io.on('connection', (socket: socketIo.Socket): void => {
   })
 
   socket.on(SocketIoEvent.CONTROLLER_JOIN_ROOM, ({ roomId }) => {
-    console.log('SocketIoEvent.JOIN_ROOM: ' + roomId)
+    console.log(socket.rooms)
+
     socket.join(roomId, () => {
       io.to(roomId).emit(SocketIoEvent.CONTROLLER_JOINED_ROOM, { roomId })
     })
   })
 
   socket.on(SocketIoEvent.CONNECTED_CONTROLLER, ({ roomId }) => {
-    console.log('SocketIoEvent.CONNECTED_CONTROLLER: ' + roomId)
+    if (socket.rooms[roomId] !== roomId) {
+      return
+    }
+
     io.to(roomId).emit(SocketIoEvent.CONNECTED_CONTROLLER, { roomId })
   })
 
   socket.on(
     SocketIoEvent.DEVICE_ORIENTATION,
     ({ roomId, alpah, beta, gamma }) => {
-      console.log('SocketIoEvent.DEVICE_ORIENTATION: ')
-
-      if (!roomId) {
+      if (socket.rooms[roomId] !== roomId) {
         return
       }
 
@@ -60,10 +64,7 @@ io.on('connection', (socket: socketIo.Socket): void => {
   socket.on(
     SocketIoEvent.ON_CAMERA_POSITION_CHANGE,
     ({ roomId, x, y, z }): void => {
-      console.log('SocketIoEvent.ON_CAMERA_POSITION_CHANGE: ')
-      console.log(roomId, x, y, z)
-
-      if (!roomId) {
+      if (socket.rooms[roomId] !== roomId) {
         return
       }
 
@@ -74,8 +75,10 @@ io.on('connection', (socket: socketIo.Socket): void => {
   socket.on(
     SocketIoEvent.ON_UPLOAD_IMAGE,
     ({ roomId, imageRate, data }): void => {
-      console.log('SocketIoEvent.ON_UPLOAD_IMAGE: ')
-      console.log(roomId, imageRate, data)
+      if (socket.rooms[roomId] !== roomId) {
+        return
+      }
+
       io.to(roomId).emit(SocketIoEvent.ON_UPLOAD_IMAGE, { imageRate, data })
     }
   )
